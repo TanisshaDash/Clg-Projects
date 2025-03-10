@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Traffic Data</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Real-time Traffic Data 🚥</h1>
+    </header>
+
+    <main>
+        {% if traffic_data %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Start Location</th>
+                        <th>End Location</th>
+                        <th>Distance (km)</th>
+                        <th>Duration (mins)</th>
+                        <th>Congestion Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in traffic_data %}
+                        <tr>
+                            <td>{{ data.start_location }}</td>
+                            <td>{{ data.end_location }}</td>
+                            <td>{{ data.distance }}</td>
+                            <td>{{ data.duration }}</td>
+                            <td>{{ data.congestion_level }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No traffic data available.</p>
+        {% endif %}
+
+        <a href="/" class="btn">Back to Home</a>
+    </main>
+</body>
+</html>
