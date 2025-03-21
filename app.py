@@ -39,7 +39,8 @@ class Route(db.Model):
 with app.app_context():
     db.create_all()
 
-# Geocode a location name to [lng, lat] using Mapbox Geocoding API.
+    
+# Geocode a location name to using Mapbox Geocoding API.
 def geocode_location(location):
     url = f"{MAPBOX_GEOCODING_URL}/{requests.utils.quote(location)}.json"
     params = {
@@ -73,7 +74,7 @@ def get_real_time_traffic_data(start_location, end_location):
         route = data['routes'][0]
         distance = route['distance'] / 1000  # meters to km
         duration = route['duration'] / 60    # seconds to minutes
-        congestion_level = "High" if duration / distance > 3 else "Moderate" if duration / distance > 1.5 else "Low"
+        congestion_level = "High" if duration / distance > 2 else "Moderate" if duration / distance > 1 else "Low"
         return round(distance, 2), round(duration, 2), congestion_level
     else:
         flash("Could not retrieve route details from Mapbox.", "danger")
