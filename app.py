@@ -2,11 +2,12 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 import requests, os
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
 
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Replace with a secure key in production
+app.secret_key = 'your_secret_key_here'  
 
 # SQLite database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///movesmart.db'
@@ -24,7 +25,7 @@ MAPBOX_GEOCODING_URL = "https://api.mapbox.com/geocoding/v5/mapbox.places"
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)  # Plain text for demo; hash in production!
+    password = db.Column(db.String(200), nullable=False)  # Hashed password in production!
 
 # Route model for storing routes
 class Route(db.Model):
@@ -39,8 +40,7 @@ class Route(db.Model):
 with app.app_context():
     db.create_all()
 
-    
-# Geocode a location name to using Mapbox Geocoding API.
+# Geocode a location name using Mapbox Geocoding API.
 def geocode_location(location):
     url = f"{MAPBOX_GEOCODING_URL}/{requests.utils.quote(location)}.json"
     params = {
@@ -74,22 +74,26 @@ def get_real_time_traffic_data(start_location, end_location):
         route = data['routes'][0]
         distance = route['distance'] / 1000  # meters to km
         duration = route['duration'] / 60    # seconds to minutes
-        congestion_level = "High" if duration / distance > 2 else "Moderate" if duration / distance > 1 else "Low"
+        congestion_level = "High" if duration / distance > 3 else "Moderate" if duration / distance > 1.5 else "Low"
         return round(distance, 2), round(duration, 2), congestion_level
     else:
         flash("Could not retrieve route details from Mapbox.", "danger")
         return None, None, "Unknown"
 
+# ----------------- Authentication Routes -----------------
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if 'user' in session:
+        return redirect(url_for('home'))
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         if User.query.filter_by(username=username).first():
             flash("Username already exists. Please choose another.", "danger")
             return redirect(url_for('signup'))
-        new_user = User(username=username, password=password)  # Hash the password in production!
+        hashed_password = generate_password_hash(password)
+        new_user = User(username=username, password=hashed_password)
         db.session.add(new_user)
         db.session.commit()
         flash("Sign up successful! Please log in.", "success")
@@ -98,11 +102,13 @@ def signup():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'user' in session:
+        return redirect(url_for('home'))
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        user = User.query.filter_by(username=username, password=password).first()  # Use secure password checking in production!
-        if user:
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, password):
             session['user'] = user.username
             flash("Logged in successfully.", "success")
             return redirect(url_for('home'))
@@ -114,17 +120,15 @@ def login():
 def logout():
     session.pop('user', None)
     flash("Logged out successfully.", "success")
-    return redirect(url_for('login'))
+    return render_template('logout.html')
 
-# Home route — displays saved routes.
 @app.route('/')
 def home():
     if 'user' not in session:
         return redirect(url_for('login'))
     routes = Route.query.order_by(Route.timestamp.desc()).all()
-    return render_template('index.html', routes=routes)
+    return render_template('index.html', routes=routes, user=session['user'])
 
-# Add new route based on place names.
 @app.route('/add_route', methods=['POST'])
 def add_route():
     if 'user' not in session:
@@ -145,7 +149,6 @@ def add_route():
         flash("Route added successfully.", "success")
     return redirect(url_for('home'))
 
-# Delete a route.
 @app.route('/delete_route/<int:route_id>', methods=['POST'])
 def delete_route(route_id):
     if 'user' not in session:

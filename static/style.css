@@ -1,89 +1,104 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    padding: 20px;
-}
-
-header {
-    background-color: #4caf50;
+/* Dark Theme for MoveSmart */
+body { 
+    font-family: Arial, sans-serif; 
+    margin: 0; 
+    padding: 20px; 
+    background: #0b132b; /* Dark navy blue */
     color: white;
-    padding: 10px;
     text-align: center;
 }
 
-h1, h2 {
-    margin-bottom: 10px;
+/* Navigation Bar */
+nav { 
+    text-align: right; 
+    margin-bottom: 20px; 
 }
 
-form {
-    background: white;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 5px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+nav a { 
+    text-decoration: none; 
+    color: #fff; 
+    background: #007bff; 
+    padding: 8px 12px; 
+    border-radius: 4px; 
 }
 
-label {
-    display: block;
-    margin-bottom: 8px;
+/* Headings */
+h1, h2 { 
+    color: #00bcd4; /* Light blue */
 }
 
-input[type="text"], button {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 10px;
+/* Forms */
+form { 
+    margin: 20px auto; 
+    background: #1c2541;
+    padding: 15px; 
+    border-radius: 8px; 
+    display: inline-block; 
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3); 
 }
 
-button {
-    background-color: #4caf50;
-    color: white;
-    border: none;
-    cursor: pointer;
+input { 
+    padding: 10px; 
+    margin: 5px; 
+    width: 300px; 
+    background: #3a506b; 
+    color: #ffffff; 
+    border: 1px solid #5bc0be; 
 }
 
-button:hover {
-    background-color: #45a049;
+button { 
+    padding: 10px; 
+    background: #5bc0be; 
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
 }
 
-ul {
-    list-style-type: none;
-    padding: 0;
+button:hover { 
+    background: #00bcd4; 
 }
 
-li {
-    background: white;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 5px;
+/* Route List */
+ul { 
+    list-style-type: none; 
+    padding: 0; 
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
+li { 
+    background: #1c2541; 
+    margin: 5px 0; 
+    padding: 10px; 
+    border-radius: 5px; 
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); 
+    color: white; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
 }
 
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
+/* Flash Messages */
+.flash { 
+    text-align: center; 
+    margin: 10px; 
+    padding: 10px; 
+    border-radius: 4px; 
 }
 
-th {
-    background-color: #4caf50;
-    color: white;
+.flash-success { 
+    background: #155724; 
+    color: #d4edda; 
 }
 
-.btn {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #4caf50;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    text-align: center;
+.flash-danger { 
+    background: #721c24; 
+    color: #f8d7da; 
 }
 
-.btn:hover {
-    background-color: #45a049;
+/* Map */
+#map { 
+    height: 400px; 
+    width: 100%; 
+    margin: 20px 0; 
+    border-radius: 8px;
 }
