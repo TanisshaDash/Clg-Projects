@@ -1,4 +1,4 @@
-/* Dark Theme for MoveSmart */
+
 body { 
     font-family: Arial, sans-serif; 
     margin: 0; 
@@ -24,7 +24,7 @@ nav a {
 
 /* Headings */
 h1, h2 { 
-    color: #00bcd4; /* Light blue */
+    color: #00bcd4;
 }
 
 /* Forms */
