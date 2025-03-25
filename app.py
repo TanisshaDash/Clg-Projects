@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 import requests, os
 from dotenv import load_dotenv
-from werkzeug.security import generate_password_hash, check_password_hash
+
 
 load_dotenv()
 
