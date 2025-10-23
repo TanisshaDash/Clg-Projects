@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import requests, os
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
+from ai_model import predict_congestion
 
 
 load_dotenv()
