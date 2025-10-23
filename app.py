@@ -133,25 +133,18 @@ def home():
     routes = Route.query.order_by(Route.timestamp.desc()).all()
     return render_template('index.html', routes=routes, user=session['user'])
 
-@app.route('/add_route', methods=['POST'])
-def add_route():
+@app.route('/predict_route', methods=['POST'])
+def predict_route():
     if 'user' not in session:
         return redirect(url_for('login'))
     start_location = request.form['start_location']
     end_location = request.form['end_location']
-    distance, duration, congestion_level = get_real_time_traffic_data(start_location, end_location)
+    distance, duration, _ = get_real_time_traffic_data(start_location, end_location)
     if distance is not None and duration is not None:
-        new_route = Route(
-            start_location=start_location,
-            end_location=end_location,
-            distance=distance,
-            duration=duration,
-            congestion_level=congestion_level
-        )
-        db.session.add(new_route)
-        db.session.commit()
-        flash("Route added successfully.", "success")
+        predicted_level = predict_congestion(distance, duration)
+        flash(f"Predicted congestion (next 10 mins): {predicted_level}", "info")
     return redirect(url_for('home'))
+
 
 @app.route('/delete_route/<int:route_id>', methods=['POST'])
 def delete_route(route_id):

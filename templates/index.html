@@ -28,6 +28,12 @@
     <input type="text" name="end_location" placeholder="Enter end location" required>
     <button type="submit">Get Route</button>
   </form>
+  <form action="{{ url_for('predict_route') }}" method="POST" class="mb-6">
+  <input type="text" name="start_location" placeholder="Start Location" class="p-2 rounded text-black">
+  <input type="text" name="end_location" placeholder="End Location" class="p-2 rounded text-black">
+  <button type="submit" class="bg-green-600 px-3 py-2 rounded">Predict Congestion</button>
+ </form>
+
 
   <h2>Saved Routes</h2>
   <ul>
