@@ -1,15 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 import requests, os
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
-from ai_model import predict_congestion
-
+import joblib
 
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  
+app.secret_key = 'your_secret_key_here'
 
 # SQLite database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///movesmart.db'
@@ -24,12 +23,24 @@ if not MAPBOX_API_KEY:
 MAPBOX_GEOCODING_URL = "https://api.mapbox.com/geocoding/v5/mapbox.places"
 MAPBOX_DIRECTIONS_URL = "https://api.mapbox.com/directions/v5/mapbox/driving"
 
+# Ensure models folder exists
+os.makedirs('models', exist_ok=True)
+
+# Load ML model for prediction
+MODEL_PATH = os.getenv('MODEL_PATH', 'models/congestion_model.joblib')
+model = None
+if os.path.exists(MODEL_PATH):
+    try:
+        model = joblib.load(MODEL_PATH)
+        print(f"✅ Model loaded from {MODEL_PATH}")
+    except Exception as e:
+        print(f"❌ Failed to load model from {MODEL_PATH}: {e}")
 
 # User model for authentication
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)  # Hashed password in production
+    password = db.Column(db.String(200), nullable=False)  # Hashed password
 
 # Route model for storing routes
 class Route(db.Model):
@@ -44,7 +55,7 @@ class Route(db.Model):
 with app.app_context():
     db.create_all()
 
-# Geocode a location name using Mapbox Geocoding API.
+# Geocode a location name using Mapbox Geocoding API
 def geocode_location(location):
     url = f"{MAPBOX_GEOCODING_URL}/{requests.utils.quote(location)}.json"
     params = {
@@ -58,13 +69,14 @@ def geocode_location(location):
     except (IndexError, KeyError):
         return None
 
-# Get route data from Mapbox Directions API.
+# Get route data from Mapbox Directions API
 def get_real_time_traffic_data(start_location, end_location):
     start_coords = geocode_location(start_location)
     end_coords = geocode_location(end_location)
     if not start_coords or not end_coords:
         flash("One or both locations could not be geocoded. Please check your input.", "danger")
         return None, None, "Unknown"
+
     waypoints = f"{start_coords[0]},{start_coords[1]};{end_coords[0]},{end_coords[1]}"
     params = {
         "access_token": MAPBOX_API_KEY,
@@ -78,14 +90,27 @@ def get_real_time_traffic_data(start_location, end_location):
         route = data['routes'][0]
         distance = route['distance'] / 1000  # meters to km
         duration = route['duration'] / 60    # seconds to minutes
-        congestion_level = "High" if duration / distance > 3 else "Moderate" if duration / distance > 1.5 else "Low"
-        return round(distance, 2), round(duration, 2), congestion_level
+        return round(distance, 2), round(duration, 2), route
     else:
         flash("Could not retrieve route details from Mapbox.", "danger")
         return None, None, "Unknown"
 
-#  Authentication Routes session - based 
+# ================== New Helper: Predict Congestion ==================
+def predict_congestion(distance, duration):
+    """
+    Simple congestion prediction using distance (km) and duration (minutes).
+    Returns 'Low', 'Moderate', 'High', or 'Unknown'.
+    """
+    if distance is None or duration is None:
+        return "Unknown"
+    ratio = duration / max(distance, 0.1)  # minutes per km
+    if ratio > 3:
+        return "High"
+    if ratio > 1.5:
+        return "Moderate"
+    return "Low"
 
+# ================== Authentication Routes ==================
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if 'user' in session:
@@ -126,6 +151,7 @@ def logout():
     flash("Logged out successfully.", "success")
     return render_template('logout.html')
 
+# ================== Home & Routes ==================
 @app.route('/')
 def home():
     if 'user' not in session:
@@ -133,18 +159,27 @@ def home():
     routes = Route.query.order_by(Route.timestamp.desc()).all()
     return render_template('index.html', routes=routes, user=session['user'])
 
-@app.route('/predict_route', methods=['POST'])
-def predict_route():
+@app.route('/add_route', methods=['POST'])
+def add_route():
     if 'user' not in session:
         return redirect(url_for('login'))
     start_location = request.form['start_location']
     end_location = request.form['end_location']
     distance, duration, _ = get_real_time_traffic_data(start_location, end_location)
     if distance is not None and duration is not None:
+        # Use heuristic to predict congestion
         predicted_level = predict_congestion(distance, duration)
-        flash(f"Predicted congestion (next 10 mins): {predicted_level}", "info")
+        new_route = Route(
+            start_location=start_location,
+            end_location=end_location,
+            distance=distance,
+            duration=duration,
+            congestion_level=predicted_level
+        )
+        db.session.add(new_route)
+        db.session.commit()
+        flash(f"Route added successfully. Predicted congestion: {predicted_level}", "success")
     return redirect(url_for('home'))
-
 
 @app.route('/delete_route/<int:route_id>', methods=['POST'])
 def delete_route(route_id):
@@ -159,5 +194,25 @@ def delete_route(route_id):
         flash("Route not found.", "danger")
     return redirect(url_for('home'))
 
+# ================== AI Prediction Route ==================
+@app.route('/predict_traffic', methods=['POST'])
+@app.route('/predict_route', methods=['POST'])
+def predict_traffic():
+    if model is None:
+        return jsonify({'error': 'Prediction model not loaded on the server.'}), 500
+
+    data = request.get_json() or {}
+    required_fields = ['hour', 'day', 'vehicle_count']
+    if not all(field in data for field in required_fields):
+        return jsonify({'error': 'Missing required fields: hour, day, vehicle_count'}), 400
+
+    try:
+        features = [data['hour'], data['day'], data['vehicle_count']]
+        prediction = model.predict([features])[0]
+        return jsonify({'predicted_congestion': str(prediction)})
+    except Exception as e:
+        return jsonify({'error': f'Prediction failed: {e}'}), 500
+
+# ================== Run App ==================
 if __name__ == '__main__':
     app.run(debug=True)
