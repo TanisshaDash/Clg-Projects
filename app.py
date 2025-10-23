@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 import requests, os
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 load_dotenv()
@@ -18,14 +19,16 @@ db = SQLAlchemy(app)
 MAPBOX_API_KEY = os.getenv('MAPBOX_API_KEY')
 if not MAPBOX_API_KEY:
     raise ValueError("No Mapbox API key found. Set the MAPBOX_API_KEY environment variable.")
-MAPBOX_DIRECTIONS_URL = "https://api.mapbox.com/directions/v5/mapbox/driving"
+
 MAPBOX_GEOCODING_URL = "https://api.mapbox.com/geocoding/v5/mapbox.places"
+MAPBOX_DIRECTIONS_URL = "https://api.mapbox.com/directions/v5/mapbox/driving"
+
 
 # User model for authentication
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)  # Hashed password in production!
+    password = db.Column(db.String(200), nullable=False)  # Hashed password in production
 
 # Route model for storing routes
 class Route(db.Model):
@@ -80,7 +83,7 @@ def get_real_time_traffic_data(start_location, end_location):
         flash("Could not retrieve route details from Mapbox.", "danger")
         return None, None, "Unknown"
 
-# ----------------- Authentication Routes -----------------
+#  Authentication Routes session - based 
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
