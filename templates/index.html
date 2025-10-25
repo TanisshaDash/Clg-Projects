@@ -6,6 +6,18 @@
   <title>MoveSmart Home</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    #predictionResult {
+      margin-top: 10px;
+      font-weight: bold;
+      text-align: center;
+      color: #0b6623;
+      background: #e8f5e9;
+      padding: 8px;
+      border-radius: 6px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <nav>
@@ -28,12 +40,15 @@
     <input type="text" name="end_location" placeholder="Enter end location" required>
     <button type="submit">Get Route</button>
   </form>
-  <form action="{{ url_for('predict_traffic') }}" method="POST" class="mb-6">
-  <input type="text" name="start_location" placeholder="Start Location" class="p-2 rounded text-black">
-  <input type="text" name="end_location" placeholder="End Location" class="p-2 rounded text-black">
-  <button type="submit" class="bg-green-600 px-3 py-2 rounded">Predict Congestion</button>
- </form>
 
+  <!-- 🔹 AI Prediction Form -->
+  <form id="predictForm" class="mb-6">
+    <input type="text" name="start_location" placeholder="Start Location" class="p-2 rounded text-black" required>
+    <input type="text" name="end_location" placeholder="End Location" class="p-2 rounded text-black" required>
+    <button type="submit" class="bg-green-600 px-3 py-2 rounded">Predict Congestion</button>
+  </form>
+
+  <div id="predictionResult"></div>
 
   <h2>Saved Routes</h2>
   <ul>
@@ -55,9 +70,31 @@
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    var map = L.map('map').setView([20.5937, 78.9629], 5); // Default center: India
+    // Initialize map
+    var map = L.map('map').setView([20.5937, 78.9629], 5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
     setTimeout(function() { map.invalidateSize(); }, 500);
+
+    // 🔹 Handle AI Prediction
+    document.getElementById('predictForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const response = await fetch('/predict_traffic', { method: 'POST', body: formData });
+      const data = await response.json();
+
+      const resultBox = document.getElementById('predictionResult');
+      if (data.predicted_congestion) {
+        resultBox.style.display = 'block';
+        resultBox.style.background = data.predicted_congestion === "High" ? "#ffebee" : "#e8f5e9";
+        resultBox.style.color = data.predicted_congestion === "High" ? "#b71c1c" : "#0b6623";
+        resultBox.textContent = `Predicted Congestion: ${data.predicted_congestion}`;
+      } else {
+        resultBox.style.display = 'block';
+        resultBox.style.background = "#fff3cd";
+        resultBox.style.color = "#856404";
+        resultBox.textContent = "Unable to predict congestion. Please try again.";
+      }
+    });
   </script>
 </body>
 </html>

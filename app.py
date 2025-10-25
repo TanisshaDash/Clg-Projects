@@ -194,23 +194,35 @@ def delete_route(route_id):
     return redirect(url_for('home'))
 
 # ================== AI Prediction Route ==================
-@app.route('/predict_traffic', methods=['POST'])
 @app.route('/predict_route', methods=['POST'])
+@app.route('/predict_traffic', methods=['POST'])
 def predict_traffic():
-    if model is None:
-        return jsonify({'error': 'Prediction model not loaded on the server.'}), 500
+    start_location = request.form.get('start_location')
+    end_location = request.form.get('end_location')
 
-    data = request.get_json() or {}
-    required_fields = ['hour', 'day', 'vehicle_count']
-    if not all(field in data for field in required_fields):
-        return jsonify({'error': 'Missing required fields: hour, day, vehicle_count'}), 400
+    if not start_location or not end_location:
+        return jsonify({"error": "Missing start or end location"}), 400
 
-    try:
-        features = [data['hour'], data['day'], data['vehicle_count']]
-        prediction = model.predict([features])[0]
-        return jsonify({'predicted_congestion': str(prediction)})
-    except Exception as e:
-        return jsonify({'error': f'Prediction failed: {e}'}), 500
+    # Get real-time traffic data from Mapbox (or placeholder if unavailable)
+    distance, duration, _ = get_real_time_traffic_data(start_location, end_location)
+
+    # If data unavailable, simulate dummy values
+    if distance is None or duration is None:
+        # Simulate average route
+        distance = 5000  # meters
+        duration = 400   # seconds
+
+    # Predict congestion level
+    predicted_level = predict_congestion(distance, duration)
+
+    return jsonify({
+        "start": start_location,
+        "end": end_location,
+        "distance_meters": distance,
+        "duration_seconds": duration,
+        "predicted_congestion": predicted_level
+    })
+
 
 # ================== Run App ==================
 if __name__ == '__main__':
