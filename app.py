@@ -151,7 +151,6 @@ def logout():
     flash("Logged out successfully.", "success")
     return render_template('logout.html')
 
-# ================== Home & Routes ==================
 @app.route('/')
 def home():
     if 'user' not in session:
