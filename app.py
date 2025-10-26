@@ -23,7 +23,6 @@ if not MAPBOX_API_KEY:
 MAPBOX_GEOCODING_URL = "https://api.mapbox.com/geocoding/v5/mapbox.places"
 MAPBOX_DIRECTIONS_URL = "https://api.mapbox.com/directions/v5/mapbox/driving"
 
-# Ensure models folder exists
 os.makedirs('models', exist_ok=True)
 
 # Load ML model for prediction
@@ -95,7 +94,6 @@ def get_real_time_traffic_data(start_location, end_location):
         flash("Could not retrieve route details from Mapbox.", "danger")
         return None, None, "Unknown"
 
-# ================== New Helper: Predict Congestion ==================
 def predict_congestion(distance, duration):
     """
     Simple congestion prediction using distance (km) and duration (minutes).
@@ -103,14 +101,14 @@ def predict_congestion(distance, duration):
     """
     if distance is None or duration is None:
         return "Unknown"
-    ratio = duration / max(distance, 0.1)  # minutes per km
+    ratio = duration / max(distance, 0.1) # Avoid division by zero
     if ratio > 3:
         return "High"
     if ratio > 1.5:
         return "Moderate"
     return "Low"
 
-# ================== Authentication Routes ==================
+# Authentication Routes 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if 'user' in session:
@@ -193,7 +191,7 @@ def delete_route(route_id):
         flash("Route not found.", "danger")
     return redirect(url_for('home'))
 
-# ================== AI Prediction Route ==================
+#  AI Prediction Route 
 @app.route('/predict_route', methods=['POST'])
 @app.route('/predict_traffic', methods=['POST'])
 def predict_traffic():
@@ -203,7 +201,7 @@ def predict_traffic():
     if not start_location or not end_location:
         return jsonify({"error": "Missing start or end location"}), 400
 
-    # Get real-time traffic data from Mapbox (or placeholder if unavailable)
+    # Get real-time traffic data from Mapbox
     distance, duration, _ = get_real_time_traffic_data(start_location, end_location)
 
     # If data unavailable, simulate dummy values
@@ -222,8 +220,5 @@ def predict_traffic():
         "duration_seconds": duration,
         "predicted_congestion": predicted_level
     })
-
-
-# ================== Run App ==================
 if __name__ == '__main__':
     app.run(debug=True)
