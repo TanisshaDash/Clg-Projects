@@ -1,0 +1,8 @@
+Flask==3.0.3
+gunicorn
+joblib
+scikit-learn
+numpy
+pandas
+requests
+python-dotenv
