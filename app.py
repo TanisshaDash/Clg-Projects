@@ -177,7 +177,6 @@ def add_route():
         db.session.commit()
         flash(f"Route added successfully. Predicted congestion: {predicted_level}", "success")
     return redirect(url_for('home'))
-
 @app.route('/delete_route/<int:route_id>', methods=['POST'])
 def delete_route(route_id):
     if 'user' not in session:
