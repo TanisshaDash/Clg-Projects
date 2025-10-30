@@ -1,4 +1,4 @@
-MoveSmart is a smart traffic management system that uses AI-based congestion prediction and real-time route optimization to make urban commuting smoother. It integrates Mapbox API for visualization and Flask for intelligent route analysis.
+*MoveSmart is a smart traffic management system* that uses **AI-based congestion prediction and real-time route optimization** to make urban commuting smoother. It integrates Mapbox API for visualization and Flask for intelligent route analysis.
 
  *Features*
 
