@@ -19,8 +19,6 @@ def get_real_time_traffic_data(start_location, end_location):
     Placeholder implementation — replace with an actual traffic API call.
     Should return a tuple: (distance_meters, duration_seconds, raw_data)
     """
-    # TODO: integrate with a real traffic API (e.g., Google Maps Directions API)
-    # For now return None values to indicate no data available.
     return None, None, None
 
 
