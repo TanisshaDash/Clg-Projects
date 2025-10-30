@@ -6,8 +6,8 @@ AI Traffic Prediction: Predicts congestion levels using machine learning.
  
 Map Visualization: Displays routes and congestion on an interactive Mapbox map.
 
-Emergency Detection (Future Scope): Identifies and prioritizes emergency vehicles.
+Emergency Detection: Identifies and prioritizes emergency vehicles.
 
 Route Management: Save, view, and delete routes.
 
-Dynamic Signal Control (Planned): Optimizes traffic light timing using congestion data.
+Dynamic Signal Control : Optimizes traffic light timing using congestion data.
