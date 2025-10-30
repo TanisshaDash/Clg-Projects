@@ -2,7 +2,7 @@
 
  *Features*
 
-AI Traffic Prediction: Predicts congestion levels using machine learning.
+*AI Traffic Prediction: Predicts congestion levels using machine learning.*
  
 Map Visualization: Displays routes and congestion on an interactive Mapbox map.
 
